@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Plot</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        #loading {
+            display: none; /* Hide the loading message by default */
+            font-size: 20px;
+        }
+    </style>
+    <script>
+        function showLoading() {
+            document.getElementById("loading").style.display = "block"; // Show the loading message
+        }
+    </script>
+</head>
+<body>
+    <h1>Satellite Data Plot</h1>
+    <form method="GET" onsubmit="showLoading()">
+        <label for="date_input1">Enter date (UTC, YYYY-MM-DD HH:MM:SS):</label>
+        <input type="text" id="date_input1" name="date_input" placeholder="YYYY-MM-DD HH:MM:SS" required>
+        <br>
+        <label for="date_input2">Enter another date (optional):</label>
+        <input type="text" id="date_input2" name="date_input" placeholder="YYYY-MM-DD HH:MM:SS">
+        <br>
+        <input type="submit" value="Submit">
+    </form>
+
+    <h2>Satellite Plots</h2>
+
+    <div id="loading">Loading...</div> <!-- Loading message -->
+
+    <!-- Container for dynamically adding multiple plot divs -->
+    <div id="plots-container">
+        {% for plot_div in plot_divs %}
+            <div class="plot">
+                {{ plot_div | safe }}
+            </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
