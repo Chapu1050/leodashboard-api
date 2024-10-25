@@ -46,27 +46,31 @@ def generate_plots(target_time):
     if data is None:
         return "<p>No data available for the selected date.</p>"
 
-    tle_line1 = np.zeros(int(len(data)/3), dtype=object)
-    tle_line2 = np.zeros(int(len(data)/3), dtype=object)
-    obj_name = np.zeros(int(len(data)/3), dtype=object)
-    for i in range(len(data)//3):
-        obj_name[i] = data[3*i][2:]
-        tle_line1[i] = data[3*i+1]
-        tle_line2[i] = data[3*i+2]
+    # Extract data and create DataFrame directly
+    obj_names = []
+    tle_line1 = []
+    tle_line2 = []
+
+    for i in range(0, len(data), 3):
+        obj_names.append(data[i][2:])  # Remove leading characters
+        tle_line1.append(data[i + 1])
+        tle_line2.append(data[i + 2])
     
-    satellites = [get_satellite(tle_line1[i], tle_line2[i]) for i in range(len(obj_name))]
+    # Create a DataFrame directly from lists
+    satellites = [get_satellite(tle_line1[i], tle_line2[i]) for i in range(len(obj_names))]
+    
+    # Vectorized computation of altitudes and inclinations
+    altitudes = np.array([sat.model.a * 6378.15 - 6378.15 for sat in satellites])
+    inclinations = np.array([np.rad2deg(sat.model.inclo) for sat in satellites])
 
-    altitudes = np.zeros(len(satellites))
-    inclinations = np.zeros(len(satellites))
-    for i in range(len(satellites)):
-        altitudes[i] = satellites[i].model.a * 6378.15 - 6378.15
-        inclinations[i] = np.rad2deg(satellites[i].model.inclo)
-
+    # Create DataFrame from the altitudes and inclinations
     df = pd.DataFrame({'Altitude': altitudes, 'Inclination': inclinations})
 
+    # Use groupby for aggregating data if needed or just create plots directly
     fig1 = px.density_heatmap(df, x='Altitude', y='Inclination', title=target_time.strftime("%Y-%m-%d %H:%M:%S"))
     fig2 = px.histogram(df, x='Altitude', title=target_time.strftime("%Y-%m-%d %H:%M:%S"))
 
+    # Create a subplot and add traces
     fig = make_subplots(rows=1, cols=2, subplot_titles=("Altitude Histogram", "Density Heatmap"))
     for trace in fig2.data:
         fig.add_trace(trace, row=1, col=1)
@@ -75,6 +79,7 @@ def generate_plots(target_time):
 
     fig.update_layout(title_text="Plots as of " + target_time.strftime('%d/%m/%Y, %H:%M:%S'), width=1200, height=600)
     return fig.to_html(full_html=False)
+
 
 def get_space_track_data(url, USERNAME, PASSWORD):
     with requests.Session() as session:
